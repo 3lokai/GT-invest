@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__groww__calculate_equity_margin",
+      "mcp__groww__calculate_fno_margin",
+      "mcp__groww__calculator",
+      "mcp__groww__curate_symbols",
+      "mcp__groww__fetch_curated_fno",
+      "mcp__groww__fetch_etf_screener",
+      "mcp__groww__fetch_fundamentals_screener",
+      "mcp__groww__fetch_historical_candle_data",
+      "mcp__groww__fetch_ipo_details",
+      "mcp__groww__fetch_ipo_listings",
+      "mcp__groww__fetch_market_movers_and_trending_stocks_funds",
+      "mcp__groww__fetch_stocks_fundamental_data",
+      "mcp__groww__fetch_technical_screener",
+      "mcp__groww__fno_mcx_contracts_search_tool",
+      "mcp__groww__get_atm_straddle_chart",
+      "mcp__groww__get_available_margin_details",
+      "mcp__groww__get_budget_announcement",
+      "mcp__groww__get_equity_portfolio_holdings",
+      "mcp__groww__get_greeks_for_fno_contract",
+      "mcp__groww__get_greeks_for_fno_symbol",
+      "mcp__groww__get_historical_candlestick_patterns",
+      "mcp__groww__get_historical_technical_indicators",
+      "mcp__groww__get_ltp",
+      "mcp__groww__get_mutualfund_details",
+      "mcp__groww__get_my_trading_positions_today",
+      "mcp__groww__get_open_interest_analysis",
+      "mcp__groww__get_order_details",
+      "mcp__groww__get_payoff_chart_steps",
+      "mcp__groww__get_quotes_and_depth",
+      "mcp__groww__get_specific_stock_position",
+      "mcp__groww__resolve_market_time_and_calendar"
+    ],
+    "deny": [
+      "mcp__groww__place_order",
+      "mcp__groww__modify_order",
+      "mcp__groww__cancel_order",
+      "mcp__groww__place_smart_order",
+      "mcp__groww__create_smart_order",
+      "mcp__groww__modify_smart_order",
+      "mcp__groww__cancel_smart_order",
+      "mcp__groww__place_gtt_order",
+      "mcp__groww__exit_position"
+    ]
+  }
+}
