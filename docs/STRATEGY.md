@@ -7,7 +7,7 @@
 ## 1. Investor mandate and operating style
 
 - Starting account: **approximately ₹1,00,000 of existing equity holdings with Groww**, not necessarily free cash. The system should assess these holdings and propose retain/exit decisions, not forcibly liquidate them.
-- New capital: **₹15,000–₹20,000 contributed monthly**, building a larger account over time. Cash may wait for a valid setup; contribution != monthly required trading volume.
+- New capital: **₹15,000–₹20,000 contributed monthly**, building a larger account over time. Cash may wait for a valid setup; a contribution is not a required monthly trading volume trading volume.
 - Style: **aggressive, rules-based swing/position trading**, holding **days to months**, with a long-only cash equity portfolio. Not day trading; no derivatives, margin, leverage, F&O or short sales.
 - Workflow: **one EOD screening/review window and one optional next-morning execution window**. These are maximum interaction windows, not required trades.
 - User experience: do the numerical work automatically, show short **BUY / WATCH / EXIT / NO ACTION** suggestions with an explanation and plain-language downside. Human approval is required for actual orders.
@@ -44,7 +44,7 @@ These defaults are **starting constraints to validate**, not a substitute for a 
 
 **Universe / eligibility before ranking**
 1. NSE **mainboard cash equities**, starting with EQ; not SME lots, trade-for-trade, or securities with problematic surveillance/trading restrictions. Point-in-time instrument lists matter.
-2. Require a verified minimum liquidity screen; working hypothesis **20-session average traded value >₹3 crore**, plus a spread/market-impact gate and minimum valid history. Be particularly conservative for penny stocks.
+2. Require a verified minimum liquidity screen; working hypothesis **20-session average traded value >₹3 crore** (the scanner currently approximates this as close × volume over the 20 sessions before the signal day, not NSE's reported traded value), plus a spread/market-impact gate and minimum valid history. Be particularly conservative for penny stocks.
 3. Exclude or separately control recent splits/bonuses, suspensions, extreme illiquidity, untrusted corporate-action data, and applicable ASM/GSM/ESM or circuit restrictions.
 4. Optional market regime filter for *new entries*: **Nifty 50 close above its 200-session moving average**. This was discussed but is **not yet coded in the bootstrap scanner**. Backtest its usefulness rather than treating it as canonical.
 
@@ -56,7 +56,7 @@ These defaults are **starting constraints to validate**, not a substitute for a 
 5. Breakout day's volume is **>=1.5×** the average volume of the preceding 20 sessions.
 6. Check that the next morning's price is still within a reasonable, predeclared distance from the planned entry; **never** assume an EOD signal fills at that day's closing price.
 
-**Important implementation distinction:** the current `strategy.scan_breakout` is a **minimal technical breakout hypothesis**: 20-day high + volume + 63-day momentum + SMA alignment + turnover. It does **not** detect true VCP/consolidation, use a market-regime filter, check surveillance lists, or validate the actual next-session entry. Do not label it a full Qullamaggie or Minervini implementation.
+**Important implementation distinction:** the current `strategy.scan_breakout` is a **minimal technical breakout hypothesis**: 20-day high + volume + 63-day momentum + SMA alignment + turnover. It does **not** detect true VCP/consolidation, use a market-regime filter, check surveillance lists, or validate the actual next-session entry. Do not label it a full Qullamaggie or Minervini implementation. It runs on official NSE bhavcopy files, which are not split/bonus adjusted, so `bhavcopy.histories()` keeps only each symbol's trailing run of consecutive `EQ` sessions with no overnight gap over 25%. That cut is a stopgap; Upstox daily candles were checked to be split-adjusted and are the planned replacement (see [Handover](HANDOVER.md)).
 
 **Research exits**
 - Initial indicative stop from market structure/volatility; **6–8%** was discussed as a starting range. The bootstrap's fixed **7% below signal close** is only an approximation, **not** a live protective order.
