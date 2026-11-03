@@ -2,7 +2,7 @@
 
 AI-assisted, rules-based swing trading research for **Indian cash equities**.
 
-> **Status:** Early-stage research system. No broker credentials, no live trading and no validated profitability. Paper trading is the default.
+> **Status:** Early-stage research system. Read-only broker access only (Upstox market data, Groww portfolio view), no live trading and no validated profitability. Paper trading is the default. Latest status and open items: [docs/HANDOVER.md](docs/HANDOVER.md).
 
 ## Starting assumptions
 
@@ -40,6 +40,15 @@ python -m unittest discover -s tests -v
 ```
 
 The demonstration uses **fabricated price data** and does not connect to any broker. It is not a backtest or trade recommendation.
+
+To scan real NSE mainboard (`EQ` series) stocks with official end-of-day bhavcopy files:
+
+```bash
+python -m gt_invest --scan                    # latest published session
+python -m gt_invest --scan --as-of 2026-10-30  # reproduce an earlier day
+```
+
+The first run downloads about 220 daily files (~40 MB, ~3 min) into `data/raw/bhavcopy/` (git-ignored); later runs use the cache. Prices are **not** adjusted for splits or bonuses yet: a stock's history is cut at any overnight gap over 25% or any day it was missing from `EQ`, so recently split, relisted or surveillance-moved stocks are skipped. Output is research candidates only.
 
 ## Next milestones
 
