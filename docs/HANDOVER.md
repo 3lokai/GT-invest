@@ -8,7 +8,7 @@ This file is for whoever picks up the work next, human or AI reviewer. It record
 |---|---|---|---|
 | #1 | `bootstrap/paper-trading-foundation` | M0: paper-only breakout scanner, Decimal risk sizing, docs, CI | Merged |
 | #7 | `feat/nse-bhavcopy-scan` → `main` | Real-data scan from NSE bhavcopy files, `CLAUDE.md` | Open |
-| (this) | `feat/broker-access-handover` → `feat/nse-bhavcopy-scan` | Read-only broker access config, docs, this handover | Open, stacked on #7 |
+| #8 | `feat/broker-access-handover` → `feat/nse-bhavcopy-scan` | Read-only broker access config, docs, this handover | Open, stacked on #7 |
 
 Merge #7 first; GitHub then retargets this PR to `main`.
 
