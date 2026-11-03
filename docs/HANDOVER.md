@@ -47,8 +47,8 @@ This file is for whoever picks up the work next, human or AI reviewer. It record
 ## Known issues and open questions
 
 1. **NSE downloader User-Agent (#7).** NSE's archive doesn't respond to non-browser clients, so `bhavcopy.fetch()` sends `User-Agent: Mozilla/5.0`. Upstox is now the default, so this only affects the `--source nse` fallback. **Reviewer decision:** keep the fallback, or delete `bhavcopy.py` except `histories()`.
-2. **Momentum lookback is off by one.** `strategy.py` uses `past[-63]`, which is 64 sessions before the signal day.
-3. **Missing test:** a volume ratio between 1.0× and 1.5× (should be rejected).
+2. ~~Momentum lookback is off by one.~~ Not a bug: `past[-63]` is exactly 63 sessions before the signal day. A test now pins it.
+3. ~~Missing test for a volume ratio between 1.0× and 1.5×.~~ Added, along with the exact 1.5× boundary (accepted).
 4. Holiday 404s are not cached, so about 10 cheap requests repeat each run.
 5. `bhavcopy.histories()` only returns symbols listed on the latest day. That's fine for a daily scan, but backtests need history for delisted names too.
 6. It's unverified whether Upstox candles are also adjusted for dividends (only splits were checked).
@@ -61,7 +61,7 @@ This file is for whoever picks up the work next, human or AI reviewer. It record
 
 ```bash
 python -m pip install -e .
-python -m unittest discover -s tests -v     # 18 tests, offline
+python -m unittest discover -s tests -v     # 21 tests, offline
 python -m gt_invest --demo                  # synthetic, no network
 python -m gt_invest --scan                  # Upstox data; needs the .env token, ~30 min fresh
 python -m gt_invest --scan --source nse     # NSE files; first run ~3 min, ~40 MB cache in data/raw/bhavcopy/
@@ -71,8 +71,7 @@ python -m gt_invest --scan --source nse     # NSE files; first run ~3 min, ~40 M
 
 1. **Confirm when Upstox publishes a session's daily candles** (known issue 9; once seen at ~00:55 IST), and schedule the scan after it.
 2. **Holdings trend check:** run the scanner's trend rules on the Groww holdings and label each as uptrend, weakening or downtrend. Symbols are passed in at runtime and never stored.
-3. Fix known issues 2 and 3, with regression tests.
-4. **M2 backtest (#3):** fills at the next session's prices, costs, slippage, survivorship controls, and comparison with Nifty.
+3. **M2 backtest (#3):** fills at the next session's prices, costs, slippage, survivorship controls, and comparison with Nifty.
 
 ## Review checklist for an outside reviewer
 

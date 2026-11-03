@@ -26,6 +26,23 @@ class TestBreakout(unittest.TestCase):
         bars[-1] = Candle(last.session, last.symbol, last.open, last.high, last.low, last.close, 500_000)
         self.assertIsNone(scan_breakout(bars))
 
+    def test_rejects_volume_between_one_and_threshold(self):
+        bars = example_candles()
+        last = bars[-1]
+        bars[-1] = Candle(last.session, last.symbol, last.open, last.high, last.low, last.close, 1_200_000)
+        self.assertIsNone(scan_breakout(bars))
+
+    def test_accepts_volume_exactly_at_threshold(self):
+        bars = example_candles()
+        last = bars[-1]
+        bars[-1] = Candle(last.session, last.symbol, last.open, last.high, last.low, last.close, 1_500_000)
+        self.assertAlmostEqual(scan_breakout(bars).volume_ratio, 1.5)
+
+    def test_momentum_measured_exactly_63_sessions_back(self):
+        bars = example_candles()
+        signal = scan_breakout(bars)
+        self.assertAlmostEqual(signal.momentum_63d, bars[-1].close / bars[-1 - 63].close - 1)
+
     def test_rejects_duplicate_session(self):
         bars = example_candles()
         bars[-1] = Candle(bars[-2].session, bars[-1].symbol, 185, 192, 183, 190, 2_000_000)
