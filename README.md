@@ -41,14 +41,19 @@ python -m unittest discover -s tests -v
 
 The demonstration uses **fabricated price data** and does not connect to any broker. It is not a backtest or trade recommendation.
 
-To scan real NSE mainboard (`EQ` series) stocks with official end-of-day bhavcopy files:
+To scan real NSE mainboard (`EQ` series) stocks, put your read-only Upstox Analytics Token in `.env` (see `.env.example`), then:
 
 ```bash
-python -m gt_invest --scan                    # latest published session
-python -m gt_invest --scan --as-of 2026-10-30  # reproduce an earlier day
+python -m gt_invest --scan                     # latest session Upstox has published
+python -m gt_invest --scan --as-of 2026-10-30  # an earlier day
+python -m gt_invest --scan --source nse        # raw NSE bhavcopy files instead, no token needed
 ```
 
-The first run downloads about 220 daily files (~40 MB, ~3 min) into `data/raw/bhavcopy/` (git-ignored); later runs use the cache. Prices are **not** adjusted for splits or bonuses yet: a stock's history is cut at any overnight gap over 25% or any day it was missing from `EQ`, so recently split, relisted or surveillance-moved stocks are skipped. Output is research candidates only.
+Upstox candles are adjusted for splits and bonuses. A fresh run makes one request per stock (~2,750), and Upstox allows 2,000 requests per 30 minutes, so it takes about 30 minutes. Re-runs within 2 hours reuse the cache in `data/raw/upstox/` (git-ignored). Upstox publishes a session's daily candles late: Nov 3's appeared between 00:52 and 00:55 IST on Nov 4. An evening scan therefore covers the previous session, and the output always prints which session it scanned.
+
+With `--source nse`, the first run downloads about 220 daily files (~40 MB, ~3 min) into `data/raw/bhavcopy/`. Those prices are **not** adjusted for splits or bonuses.
+
+Either way, a stock's history is cut at any overnight gap over 25% or any session it was missing from `EQ`, so relisted or surveillance-moved stocks (and, on NSE data, recently split ones) are skipped. Output is research candidates only.
 
 ## Next milestones
 

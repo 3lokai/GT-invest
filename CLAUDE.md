@@ -15,7 +15,7 @@ python -m pip install -e .                                   # install (src/ lay
 python -m unittest discover -s tests -v                      # all tests
 python -m unittest tests.test_risk.TestPositionSizing.test_cash_budget_limited  # single test
 python -m gt_invest --demo                                   # synthetic smoke test (CI runs this too)
-python -m gt_invest --scan [--as-of YYYY-MM-DD]             # real NSE scan; downloads/caches to data/raw/bhavcopy/
+python -m gt_invest --scan [--as-of YYYY-MM-DD] [--source nse]  # real scan; Upstox (needs .env token, ~30 min fresh) or NSE files
 ```
 
 CI (`.github/workflows/ci.yml`) runs exactly the install, unittest and `--demo` steps above.
@@ -26,7 +26,8 @@ Pipeline (see `docs/ARCHITECTURE.md` for the full future flow): candles → `str
 
 - `strategy.py`: a pure function over one symbol's chronological daily candles. Any bad input (too little history, duplicate or unsorted sessions, mixed symbols, invalid OHLC) returns `None` rather than raising, so a rejected candidate and a malformed input look the same to the caller. Thresholds live in the frozen `BreakoutConfig`.
 - `risk.py`: works only in `Decimal`. It raises `ValueError` for non-Decimal or non-finite inputs and returns `None` when no whole share fits. Quantity is the smaller of two limits: the risk budget (`max_loss_fraction_of_equity` divided by per-share risk) and the notional budget (`min(cash, equity × max_notional_fraction)`).
-- `bhavcopy.py`: the only real data source. Network access lives only in `fetch()`, and tests stay offline by using in-memory zips. A 404 means NSE has no file for that day (holiday, or not published yet), so it is never cached. NSE does not adjust for splits or bonuses, so `histories()` keeps only each symbol's trailing run of consecutive `EQ` sessions with no overnight gap over 25%. Replace that cut with real corporate-action adjustment once that data exists.
+- `upstox.py`: the default data source, Upstox split/bonus-adjusted daily candles via the read-only Analytics Token. Network access lives only in `instruments()` and `fetch()`; `_throttle()` keeps within Upstox's 2,000-requests-per-30-min limit. The candle cache expires after 2 hours because Upstox re-adjusts past candles after a split. `by_day()` drops a last session that is still being published. Upstox sits behind Cloudflare, which rejects urllib's default User-Agent, so requests send `gt-invest/0.1`. The token gets 401 on market-quote endpoints; only historical candles work.
+- `bhavcopy.py`: the `--source nse` fallback, and home of `histories()`, which both sources use. Network access lives only in `fetch()`, and tests stay offline by using in-memory zips. A 404 means NSE has no file for that day (holiday, or not published yet), so it is never cached. NSE does not adjust for splits or bonuses, so `histories()` keeps only each symbol's trailing run of consecutive `EQ` sessions with no overnight gap over 25%. On Upstox data the same cut only catches missing sessions and bad prints.
 - Float/Decimal boundary: `models.py` stores prices as `float`; money is converted with `Decimal(str(x))` before sizing (see `__main__.py`). Keep any arithmetic that sets an executable quantity or price in `Decimal`.
 - `__main__.example_candles()` is the fabricated dataset shared by the demo and `tests/test_strategy.py`. Changing it changes the test expectations. Never present its output as market data or performance.
 - The scanner emits signals on the closing price. Backtests must fill at a later session and include costs and slippage, not at `reference_close`.
