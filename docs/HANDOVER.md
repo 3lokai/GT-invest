@@ -10,7 +10,7 @@ This file is for whoever picks up the work next, human or AI reviewer. It record
 | #7 | `feat/nse-bhavcopy-scan` | Real-data scan from NSE bhavcopy files, `CLAUDE.md` | Merged |
 | #8 | `feat/broker-access-handover` | Read-only broker access config, docs, this handover | Merged |
 | #9 | `docs/strategy-playbook` | `docs/STRATEGY.md`: agreed strategies, risk mandate, validation rules | Merged |
-| this PR | `feat/upstox-data-adapter` | Upstox adjusted daily candles as the default `--scan` source | Open |
+| #10 | `feat/upstox-data-adapter` | Upstox adjusted daily candles as the default `--scan` source | Merged |
 
 ## What was done, in order
 
