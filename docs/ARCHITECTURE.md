@@ -23,8 +23,9 @@ Historical replay / paper ledger ← order proposal
 - `src/gt_invest/strategy.py`: pure end-of-day indicator + breakout logic.
 - `src/gt_invest/risk.py`: independently testable position-size limits.
 - `src/gt_invest/models.py`: immutable input/output models.
-- `src/gt_invest/__main__.py`: synthetic paper-mode demonstration only.
-- Future: `data/` point-in-time EOD adapter, `backtest/` event-driven portfolio simulation, `brokers/upstox/` isolated read/write adapters, `journal/` append-only audit, `reports/` LLM-friendly summaries.
+- `src/gt_invest/bhavcopy.py`: read-only download/cache/parse of official NSE bhavcopy files; trims each stock's history at gaps it cannot trust.
+- `src/gt_invest/__main__.py`: synthetic demo (`--demo`) and market-wide EOD scan (`--scan`); prints candidates only.
+- Future: corporate-action adjustment, Upstox data adapter, `backtest/` event-driven portfolio simulation, `brokers/upstox/` isolated read/write adapters, `journal/` append-only audit, `reports/` LLM-friendly summaries.
 
 ## Execution safety contract
 A signal is **not** an order. A proposal is **not** an order. In the future, the executor must independently re-check approved instrument, symbol-to-token mapping, available funds, lot size, max exposure, approvals, live-paper setting and current exchange state. A new approval is required if anything material changes. Broker order placement, modification and cancellation are disabled in the current version.

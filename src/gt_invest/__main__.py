@@ -3,6 +3,7 @@ import argparse
 from datetime import date, timedelta
 from decimal import Decimal
 
+from . import bhavcopy
 from .models import Candle
 from .strategy import scan_breakout
 from .risk import size_position
@@ -26,10 +27,27 @@ def example_candles() -> list[Candle]:
     return bars
 
 
+def scan(as_of: date) -> None:
+    print("NSE EOD SCAN — research candidates only, not recommendations, no orders.")
+    days = bhavcopy.load(as_of, sessions=220)
+    runs = bhavcopy.histories(days)
+    hits = [s for run in runs.values() if (s := scan_breakout(run))]
+    print(f"Session {days[-1][0].session}: {len(runs)} EQ stocks, "
+          f"{sum(len(r) >= 201 for r in runs.values())} with enough clean history, {len(hits)} candidates.")
+    for s in sorted(hits, key=lambda s: -s.momentum_63d):
+        print(f"{s.symbol:<14} close ₹{s.reference_close:>10.2f}  stop ₹{s.indicative_stop:>10.2f}  "
+              f"volume {s.volume_ratio:4.1f}x  63d {s.momentum_63d:+.0%}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="GT Invest: paper-only research")
     parser.add_argument("--demo", action="store_true", help="Run only a synthetic signal demonstration")
+    parser.add_argument("--scan", action="store_true", help="Scan NSE mainboard stocks from official bhavcopy files")
+    parser.add_argument("--as-of", type=date.fromisoformat, default=date.today(), help="Last session date for --scan")
     args = parser.parse_args()
+    if args.scan:
+        scan(args.as_of)
+        return
     if not args.demo:
         parser.print_help()
         return
