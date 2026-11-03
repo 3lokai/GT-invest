@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
-This is paper-only research for Indian NSE cash equities. No broker is connected, and nothing in this repo may place, modify or cancel orders. Before changing signals, sizing or anything execution-shaped, read `docs/SAFETY.md`, which lists the risk defaults and the gates required before live trading.
+This is paper-only research for Indian NSE cash equities. No broker is connected, and nothing in this repo may place, modify or cancel orders. Before changing signals, sizing or anything execution-shaped, read `docs/SAFETY.md`, which lists the risk defaults and the gates required before live trading. The agreed strategy mandate and which thresholds are still hypotheses are in `docs/STRATEGY.md`.
 
 ## Commands
 

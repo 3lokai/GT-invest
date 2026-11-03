@@ -52,4 +52,4 @@ The first run downloads about 220 daily files (~40 MB, ~3 min) into `data/raw/bh
 
 ## Next milestones
 
-See [Product brief](docs/PRODUCT.md), [Architecture](docs/ARCHITECTURE.md) and [Safety gates](docs/SAFETY.md). Implementation tasks are in GitHub issues.
+See [Product brief](docs/PRODUCT.md), [Architecture](docs/ARCHITECTURE.md), [Safety gates](docs/SAFETY.md) and [Strategy playbook](docs/STRATEGY.md). Implementation tasks are in GitHub issues.
