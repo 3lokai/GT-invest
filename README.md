@@ -29,8 +29,18 @@ AI-assisted, rules-based swing trading research for **Indian cash equities**.
 - **No autonomous orders** by default. No hardcoded credentials. No synthetic-demo results presented as investment performance.
 - Holdings imported from Groww must retain their cost basis; an Upstox account cannot sell shares held with Groww unless transferred.
 
-## Getting started
+## Run the local demonstration
 
-The bootstrap is tracked in the repository's issues and documentation. There is no need to export holdings in this chat; portfolio imports will be handled inside the project.
+Requires Python 3.11+:
 
-See [Product brief](docs/PRODUCT.md), [Architecture](docs/ARCHITECTURE.md) and [Safety gates](docs/SAFETY.md).
+```bash
+python -m pip install -e .
+python -m gt_invest --demo
+python -m unittest discover -s tests -v
+```
+
+The demonstration uses **fabricated price data** and does not connect to any broker. It is not a backtest or trade recommendation.
+
+## Next milestones
+
+See [Product brief](docs/PRODUCT.md), [Architecture](docs/ARCHITECTURE.md) and [Safety gates](docs/SAFETY.md). Implementation tasks are in GitHub issues.
