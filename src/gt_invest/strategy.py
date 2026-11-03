@@ -18,6 +18,27 @@ class BreakoutConfig:
     indicative_stop_fraction: float = 0.07
 
 
+def average_close(candles: list[Candle], sessions: int) -> float:
+    return sum(bar.close for bar in candles[-sessions:]) / sessions
+
+
+def trend_label(candles: list[Candle], config: BreakoutConfig | None = None) -> str | None:
+    """'uptrend', 'weakening' or 'downtrend' from the last close and its 50/200-session averages.
+
+    A description of the chart, not a buy or sell recommendation. None without enough history.
+    """
+    c = config or BreakoutConfig()
+    if len(candles) < c.slow_sessions:
+        return None
+    close = candles[-1].close
+    fast, slow = average_close(candles, c.fast_sessions), average_close(candles, c.slow_sessions)
+    if close > fast > slow:
+        return "uptrend"
+    if close < slow and fast < slow:
+        return "downtrend"
+    return "weakening"
+
+
 def scan_breakout(candles: list[Candle], config: BreakoutConfig | None = None) -> BreakoutSignal | None:
     """Return an EOD candidate, or None. Caller supplies chronological daily candles.
 
@@ -52,8 +73,7 @@ def scan_breakout(candles: list[Candle], config: BreakoutConfig | None = None) -
     recent_turnover = sum(bar.close * bar.volume for bar in recent) / len(recent)
     if recent_turnover < c.minimum_average_turnover_inr:
         return None
-    fast_avg = sum(bar.close for bar in candles[-c.fast_sessions:]) / c.fast_sessions
-    slow_avg = sum(bar.close for bar in candles[-c.slow_sessions:]) / c.slow_sessions
+    fast_avg, slow_avg = average_close(candles, c.fast_sessions), average_close(candles, c.slow_sessions)
     if today.close <= fast_avg or today.close <= slow_avg or fast_avg <= slow_avg:
         return None
     reference_price = past[-c.momentum_sessions].close
