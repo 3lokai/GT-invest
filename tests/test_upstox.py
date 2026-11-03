@@ -25,7 +25,8 @@ class TestUpstox(unittest.TestCase):
 
     def test_instruments_keep_only_mainboard_eq(self):
         rows = [
-            {"segment": "NSE_EQ", "instrument_type": "EQ", "trading_symbol": "GOOD", "instrument_key": "NSE_EQ|INE1"},
+            {"segment": "NSE_EQ", "instrument_type": "EQ", "trading_symbol": "GOOD", "instrument_key": "NSE_EQ|INE1", "isin": "INE1"},
+            {"segment": "NSE_EQ", "instrument_type": "EQ", "trading_symbol": "GOLDETF", "instrument_key": "NSE_EQ|INF1", "isin": "INF1"},
             {"segment": "NSE_EQ", "instrument_type": "SM", "trading_symbol": "SMEONE", "instrument_key": "NSE_EQ|INE2"},
             {"segment": "NSE_EQ", "instrument_type": "BE", "trading_symbol": "WATCHED", "instrument_key": "NSE_EQ|INE3"},
             {"segment": "NSE_FO", "instrument_type": "FUT", "trading_symbol": "GOOD FUT", "instrument_key": "NSE_FO|1"},

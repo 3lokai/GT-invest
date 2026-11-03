@@ -2,9 +2,10 @@
 import argparse
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import bhavcopy, upstox
+from . import backtest as engine, bhavcopy, upstox
 from .models import Candle
 from .strategy import average_close, scan_breakout, trend_label
 from .risk import size_position
@@ -69,6 +70,21 @@ def latest() -> None:
     print(f"{now:%Y-%m-%d %H:%M} IST  Upstox latest daily candle: {max(r[-1].session for r in runs.values())}")
 
 
+def backtest(end: date) -> None:
+    """Breakout backtest on every NSE file since July 2024; writes the report to reports/."""
+    days = bhavcopy.load(end)
+    result = engine.run(days, start=days[200][0].session)  # the scanner needs 201 sessions
+    first, last = result.curve[0][0], result.curve[-1][0]
+    key = "NSE_INDEX|Nifty 500"
+    data = upstox.fetch(key, date.fromisoformat(first), date.fromisoformat(last), upstox.token(), ttl=0)
+    text = engine.report(result, upstox.parse(data, "NIFTY 500"), "Nifty 500")
+    path = Path("reports") / f"backtest-breakout-v1-{last}.md"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(text)
+    print(text.split("## Stability")[0])
+    print(f"Full report: {path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="GT Invest: paper-only research")
     parser.add_argument("--demo", action="store_true", help="Run only a synthetic signal demonstration")
@@ -77,10 +93,14 @@ def main() -> None:
                         help="--scan data: Upstox adjusted candles (default) or raw NSE bhavcopy files")
     parser.add_argument("--trend", nargs="+", metavar="SYMBOL", help="Label each symbol's chart trend (Upstox data)")
     parser.add_argument("--latest", action="store_true", help="Print the latest session Upstox has published")
+    parser.add_argument("--backtest", action="store_true", help="Backtest the breakout scanner on NSE files since July 2024")
     parser.add_argument("--as-of", type=date.fromisoformat, default=date.today(), help="Last session date for --scan/--trend")
     args = parser.parse_args()
     if args.latest:
         latest()
+        return
+    if args.backtest:
+        backtest(args.as_of)
         return
     if args.trend:
         trend([s.upper() for s in args.trend], args.as_of)

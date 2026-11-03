@@ -18,6 +18,7 @@ python -m gt_invest --demo                                   # synthetic smoke t
 python -m gt_invest --scan [--as-of YYYY-MM-DD] [--source nse]  # real scan; Upstox (needs .env token, ~30 min fresh) or NSE files
 python -m gt_invest --trend SYMBOL ...                     # uptrend/weakening/downtrend labels (Upstox)
 python -m gt_invest --latest                               # newest session Upstox has published
+python -m gt_invest --backtest                             # breakout backtest on NSE files; report to reports/
 ```
 
 CI (`.github/workflows/ci.yml`) runs exactly the install, unittest and `--demo` steps above.
@@ -36,4 +37,6 @@ Pipeline (see `docs/ARCHITECTURE.md` for the full future flow): candles → `str
 
 Broker access is read-only and configured outside the code. The Upstox Analytics Token lives in `.env` (see `.env.example`). The Groww MCP permissions live in `.claude/settings.json`: read tools are allowed and likely order tools are denied. Don't loosen them. The table in `docs/ARCHITECTURE.md` explains why each access route was chosen. Current status and open issues are in `docs/HANDOVER.md`.
 
-Planned modules (corporate actions, `backtest/`, `brokers/upstox/`, `journal/`, `reports/`) don't exist yet. Milestones M1–M5 are in `docs/PRODUCT.md`.
+- `backtest.py`: replays `scan_breakout` and `size_position` day by day over every NSE file since July 2024, so research and paper share one set of rules. It runs on NSE files, not Upstox, because they include stocks later delisted; that is why `bhavcopy.py` stays. Money stays in `Decimal`; only report metrics use floats. `tests/test_backtest.py` pins exact fills and charges, so changing `Costs`, slippage or the exit order changes those numbers.
+
+Planned modules (corporate actions, `brokers/upstox/`, `journal/`) don't exist yet. Milestones M1–M5 are in `docs/PRODUCT.md`.

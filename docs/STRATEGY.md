@@ -85,6 +85,8 @@ Evaluate each strategy over multiple market regimes with historical, point-in-ti
 - Comparison with a **Nifty 500 / suitable total-return benchmark** and a buy-and-hold alternative, with **matched cash contributions**.
 - Walk-forward/out-of-sample tests and robustness to parameter changes. A great in-sample equity curve does not justify live orders.
 
+**First result (V1 breakout, NSE data 2025-04-30 to 2026-11-03):** [`reports/backtest-breakout-v1-2026-11-03.md`](../reports/backtest-breakout-v1-2026-11-03.md). It lost money and trailed the Nifty 500 with the same deposits; charges on small positions were a large part of the gap. One short period and one regime, so treat it as a warning about V1, not a verdict on breakouts.
+
 **Reject a strategy** if it relies on impossible fills, thin liquidity, unfunded purchases, hindsight universe selection, or LLM discretionary overrides. Positive simulated returns do not guarantee future profits.
 
 ## 6. Operational acceptance criteria
