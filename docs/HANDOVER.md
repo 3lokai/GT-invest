@@ -30,6 +30,7 @@ This file is for whoever picks up the work next, human or AI reviewer. It record
    - Upstox's Nov 2 RELIANCE candle matched the NSE file exactly (OHLC and volume).
    - The Analytics Token gets 401 on every market-quote endpoint (`/v2/market-quote/quotes`, `/v2` and `/v3` `ohlc`). Only historical candles work, so there is no cheap batch call to pre-filter stocks; each stock costs one request.
    - Upstox's Cloudflare front rejects urllib's default User-Agent (error 1010); `gt-invest/0.1` works.
+8. **Holdings trend check.** `python -m gt_invest --trend SYMBOL ...` labels each chart uptrend, weakening or downtrend from its close and 50/200-session averages. Symbols are typed at runtime (for example from the Groww MCP) and never stored. It describes charts; it is not a sell signal.
    - Live scan of the Nov 3 session (run 00:55–01:27 IST, 31 min): 2,744 stocks, 2,287 with enough clean history (NSE files: 1,873), 3 candidates. The NSE scan of the same session found 2 of them with identical closes and stops; the third, SPECTRUM, lacked enough clean NSE history. Scanner output, not a recommendation or a backtest.
 
 ## Decisions and why
@@ -54,14 +55,14 @@ This file is for whoever picks up the work next, human or AI reviewer. It record
 6. It's unverified whether Upstox candles are also adjusted for dividends (only splits were checked).
 7. The Groww deny list uses **guessed** names. A tool Groww adds later is neither allowed nor denied, so Claude Code's permission mode decides. Re-check the tool list after Groww updates.
 8. **Local-only setup that isn't in the repo:** the `.env` token, and the Groww MCP registration in `~/.claude.json`. To register Groww on a new machine, run `claude mcp add --transport http groww https://mcp.groww.in/mcp`, then log in via `/mcp`.
-9. **Upstox publishes daily candles late.** Nov 3's candles were missing from the historical endpoint at 00:52 IST on Nov 4 (the intraday endpoint was already empty) and present for all 2,744 stocks by 00:55. One observation only. Until it is confirmed, an evening scan covers the previous session; `by_day()` drops a session that is only partly published.
+9. **Upstox publish time is unknown.** An earlier note here said Nov 3's candles appeared around 00:55 IST on Nov 4. That was wrong. Cloudflare in front of Upstox caches each candle URL for hours (an 11.4-hour-old copy was served), ignoring query strings and `Cache-Control: no-cache`, and the 00:52 probe hit a stale copy. `upstox.fetch()` now shifts `from_date` by one day per 15-minute slot so every run gets fresh URLs; the probe then returned Nov 3 at 03:52. A stock whose response is still stale drops out of that day's scan, because `histories()` only keeps stocks present on the latest session, and `by_day()` drops a session that is only partly published. `python -m gt_invest --latest` prints the newest published session from three stocks, to measure the publish time.
 10. **A fresh Upstox scan takes about 30 minutes** (~2,750 requests against 2,000 per 30 min). Re-runs within 2 hours reuse the cache. The cache is short on purpose, since Upstox re-adjusts history after a split.
 
 ## How to verify
 
 ```bash
 python -m pip install -e .
-python -m unittest discover -s tests -v     # 21 tests, offline
+python -m unittest discover -s tests -v     # 25 tests, offline
 python -m gt_invest --demo                  # synthetic, no network
 python -m gt_invest --scan                  # Upstox data; needs the .env token, ~30 min fresh
 python -m gt_invest --scan --source nse     # NSE files; first run ~3 min, ~40 MB cache in data/raw/bhavcopy/
@@ -69,9 +70,8 @@ python -m gt_invest --scan --source nse     # NSE files; first run ~3 min, ~40 M
 
 ## Proposed next steps
 
-1. **Confirm when Upstox publishes a session's daily candles** (known issue 9; once seen at ~00:55 IST), and schedule the scan after it.
-2. **Holdings trend check:** run the scanner's trend rules on the Groww holdings and label each as uptrend, weakening or downtrend. Symbols are passed in at runtime and never stored.
-3. **M2 backtest (#3):** fills at the next session's prices, costs, slippage, survivorship controls, and comparison with Nifty.
+1. **Measure when Upstox publishes a session's daily candles** (known issue 9) by running `--latest` every 15 minutes for a few evenings, e.g. crontab `*/15 16-23 * * 1-5 cd <repo> && PYTHONPATH=src python -m gt_invest --latest >> data/raw/upstox/publish-times.log`. Then schedule the scan after it.
+2. **M2 backtest (#3):** fills at the next session's prices, costs, slippage, survivorship controls, and comparison with Nifty.
 
 ## Review checklist for an outside reviewer
 

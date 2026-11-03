@@ -12,7 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import deque
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .models import Candle
@@ -82,12 +82,25 @@ def instruments(cache: Path = CACHE) -> dict[str, str]:
     return parse_instruments(path.read_bytes())
 
 
-def fetch(key: str, start: date, end: date, auth: str, cache: Path = CACHE) -> bytes | None:
-    """Raw daily-candle JSON for one instrument, or None if Upstox rejects the instrument."""
-    path = cache / "candles" / str(end) / f"{key.split('|')[-1]}.json"
-    if _fresh(path, CANDLE_TTL):
+def _cdn_bust() -> int:
+    """Extra days of history to request, different every 15 minutes of the day (0-95).
+
+    Cloudflare in front of Upstox caches each URL for hours (an 11-hour-old copy was seen),
+    ignoring query strings and no-cache headers, so a URL first requested before a session was
+    published keeps returning it without that session. Moving from_date makes a fresh URL.
+    """
+    now = datetime.now()
+    return (now.hour * 60 + now.minute) // 15
+
+
+def fetch(key: str, start: date, end: date, auth: str, cache: Path = CACHE, ttl: float = CANDLE_TTL) -> bytes | None:
+    """Raw daily-candle JSON for one instrument (may start before `start`), or None if Upstox
+    rejects the instrument."""
+    path = cache / "candles" / f"{start}_{end}" / f"{key.split('|')[-1]}.json"
+    if _fresh(path, ttl):
         return path.read_bytes()
-    url = CANDLES_URL.format(key=urllib.parse.quote(key, safe=""), to=end, frm=start)
+    frm = start - timedelta(days=_cdn_bust())
+    url = CANDLES_URL.format(key=urllib.parse.quote(key, safe=""), to=end, frm=frm)
     request = urllib.request.Request(url, headers={**HEADERS, "Authorization": f"Bearer {auth}"})
     _throttle()
     try:
@@ -132,17 +145,28 @@ def by_day(candles: list[Candle]) -> list[list[Candle]]:
     return days
 
 
-def load(end: date, sessions: int, cache: Path = CACHE) -> list[list[Candle]]:
-    """The last `sessions` trading days up to `end`, oldest first, one list of candles per day."""
+def history(symbols: list[str], end: date, sessions: int, cache: Path = CACHE,
+            ttl: float = CANDLE_TTL) -> dict[str, list[Candle]]:
+    """Per symbol: its last `sessions` daily candles up to `end`, oldest first.
+
+    Symbols missing from the mainboard EQ list (ETFs, SME, BE, delisted) are left out.
+    """
     auth = token()
     keys = instruments(cache)
     start = end - timedelta(days=sessions * 7 // 4)  # ~250 sessions a year, plus holidays
-    print(f"Upstox: {len(keys)} stocks, limit {LIMITS[-1][1]} requests per 30 min; a fresh run "
-          "takes about 30 minutes, re-runs within 2 hours reuse the cache.", file=sys.stderr)
-    candles: list[Candle] = []
-    for i, (symbol, key) in enumerate(sorted(keys.items()), 1):
-        if (data := fetch(key, start, end, auth, cache)) is not None:
-            candles += parse(data, symbol)
+    out: dict[str, list[Candle]] = {}
+    for i, symbol in enumerate(symbols, 1):
+        if symbol in keys and (data := fetch(keys[symbol], start, end, auth, cache, ttl)) is not None:
+            out[symbol] = parse(data, symbol)[-sessions:]
         if i % 250 == 0:
-            print(f"  {i}/{len(keys)}", file=sys.stderr)
-    return by_day(candles)[-sessions:]
+            print(f"  {i}/{len(symbols)}", file=sys.stderr)
+    return out
+
+
+def load(end: date, sessions: int, cache: Path = CACHE) -> list[list[Candle]]:
+    """The last `sessions` trading days up to `end`, oldest first, one list of candles per day."""
+    symbols = sorted(instruments(cache))
+    print(f"Upstox: {len(symbols)} stocks, limit {LIMITS[-1][1]} requests per 30 min; a fresh run "
+          "takes about 30 minutes, re-runs within 2 hours reuse the cache.", file=sys.stderr)
+    runs = history(symbols, end, sessions, cache)
+    return by_day([c for run in runs.values() for c in run])[-sessions:]

@@ -1,7 +1,7 @@
 import unittest
 from gt_invest.__main__ import example_candles
 from gt_invest.models import Candle
-from gt_invest.strategy import scan_breakout
+from gt_invest.strategy import scan_breakout, trend_label
 
 
 class TestBreakout(unittest.TestCase):
@@ -47,6 +47,26 @@ class TestBreakout(unittest.TestCase):
         bars = example_candles()
         bars[-1] = Candle(bars[-2].session, bars[-1].symbol, 185, 192, 183, 190, 2_000_000)
         self.assertIsNone(scan_breakout(bars))
+
+
+
+def closes(*prices):
+    return [Candle(f"s{i:04d}", "T", p, p, p, p, 1000) for i, p in enumerate(prices)]
+
+
+class TestTrendLabel(unittest.TestCase):
+    def test_rising_is_uptrend(self):
+        self.assertEqual(trend_label(closes(*range(100, 320))), "uptrend")
+
+    def test_falling_is_downtrend(self):
+        self.assertEqual(trend_label(closes(*range(320, 100, -1))), "downtrend")
+
+    def test_pullback_inside_uptrend_is_weakening(self):
+        # long rise, then a drop below the 50-session average but still above the 200
+        self.assertEqual(trend_label(closes(*range(100, 320), 240)), "weakening")
+
+    def test_short_history_has_no_label(self):
+        self.assertIsNone(trend_label(closes(*range(100, 299))))
 
 
 if __name__ == "__main__":
