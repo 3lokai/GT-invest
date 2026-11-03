@@ -6,6 +6,8 @@
 3. No leverage, intraday product types, futures/options, naked shorts or margin.
 4. No LLM, downloaded webpage or social message is trusted as an order request.
 5. No order placement, modification, transfer or cancellation can be triggered by this repo today.
+6. Broker access for agents is read-only: the Upstox Analytics Token cannot trade, and Groww MCP tools are limited by the allow/deny lists in `.claude/settings.json`. Re-check the Groww tool list whenever Groww updates its server; new tools are neither allowed nor denied by default.
+7. Keep Groww DDPI (demat debit authorisation) off, so no connected tool can sell holdings.
 
 ## Research defaults — subject to testing
 - Initial maximum planned stop risk: 0.5% of total account equity per candidate.

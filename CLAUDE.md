@@ -31,4 +31,6 @@ Pipeline (see `docs/ARCHITECTURE.md` for the full future flow): candles → `str
 - `__main__.example_candles()` is the fabricated dataset shared by the demo and `tests/test_strategy.py`. Changing it changes the test expectations. Never present its output as market data or performance.
 - The scanner emits signals on the closing price. Backtests must fill at a later session and include costs and slippage, not at `reference_close`.
 
+Broker access is read-only and configured outside the code. The Upstox Analytics Token lives in `.env` (see `.env.example`). The Groww MCP permissions live in `.claude/settings.json`: read tools are allowed and likely order tools are denied. Don't loosen them. The table in `docs/ARCHITECTURE.md` explains why each access route was chosen. Current status and open issues are in `docs/HANDOVER.md`.
+
 Planned modules (corporate actions, `backtest/`, `brokers/upstox/`, `journal/`, `reports/`) don't exist yet. Milestones M1–M5 are in `docs/PRODUCT.md`.

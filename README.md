@@ -2,7 +2,7 @@
 
 AI-assisted, rules-based swing trading research for **Indian cash equities**.
 
-> **Status:** Early-stage research system. No broker credentials, no live trading and no validated profitability. Paper trading is the default.
+> **Status:** Early-stage research system. Read-only broker access only (Upstox market data, Groww portfolio view), no live trading and no validated profitability. Paper trading is the default. Latest status and open items: [docs/HANDOVER.md](docs/HANDOVER.md).
 
 ## Starting assumptions
 
