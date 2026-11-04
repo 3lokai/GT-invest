@@ -304,6 +304,7 @@ def report(result: Result, index: list[Candle], index_name: str) -> str:
     bench_irr = xirr(flows + [(end, bench_final)])
     charges = sum((t.charges for t in result.trades), D(0))
     beyond = [t for t in result.trades if -t.pnl > t.planned_loss + t.charges]
+    suspect_gap_fills = sum(t.reason == "unadjusted gap, closed at last price" for t in result.trades)
     reasons: dict[str, int] = {}
     for t in result.trades:
         reasons[t.reason] = reasons.get(t.reason, 0) + 1
@@ -318,6 +319,10 @@ def report(result: Result, index: list[Candle], index_name: str) -> str:
         "> Simulated research result on historical data. Not a recommendation, not a forecast, and",
         "> not evidence that the strategy will make money. Past simulated returns do not guarantee",
         "> future returns. No orders were placed.",
+        "",
+        *( [f"> **DATA QUALITY WARNING:** {suspect_gap_fills} held-position gap(s) were simulated at the prior close,",
+            "> an untradeable price if the move was not a corporate action. Results may overstate performance.",
+            "> Treat this as an exploratory baseline, not a reliable deployable strategy."] if suspect_gap_fills else [] ),
         "",
         "## Data and method",
         "",
