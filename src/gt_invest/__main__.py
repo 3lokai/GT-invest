@@ -70,15 +70,20 @@ def latest() -> None:
     print(f"{now:%Y-%m-%d %H:%M} IST  Upstox latest daily candle: {max(r[-1].session for r in runs.values())}")
 
 
-def backtest(end: date) -> None:
+def backtest(end: date, initial_inr: Decimal, monthly_inr: Decimal, min_position_inr: Decimal) -> None:
     """Breakout backtest on every NSE file since July 2024; writes the report to reports/."""
     days = bhavcopy.load(end)
-    result = engine.run(days, start=days[200][0].session)  # the scanner needs 201 sessions
+    config = engine.BacktestConfig(initial_cash=initial_inr, monthly_contribution=monthly_inr,
+                                   min_position_notional=min_position_inr)
+    result = engine.run(days, start=days[200][0].session, config=config)  # the scanner needs 201 sessions
     first, last = result.curve[0][0], result.curve[-1][0]
     key = "NSE_INDEX|Nifty 500"
     data = upstox.fetch(key, date.fromisoformat(first), date.fromisoformat(last), upstox.token(), ttl=0)
     text = engine.report(result, upstox.parse(data, "NIFTY 500"), "Nifty 500")
-    path = Path("reports") / f"backtest-breakout-v1-{last}.md"
+    suffix = "" if (initial_inr, monthly_inr, min_position_inr) == (
+        Decimal("100000"), Decimal("20000"), Decimal("0")) else (
+        f"-initial{int(initial_inr)}-monthly{int(monthly_inr)}-min{int(min_position_inr)}")
+    path = Path("reports") / f"backtest-breakout-v1-{last}{suffix}.md"
     path.parent.mkdir(exist_ok=True)
     path.write_text(text)
     print(text.split("## Stability")[0])
@@ -94,13 +99,19 @@ def main() -> None:
     parser.add_argument("--trend", nargs="+", metavar="SYMBOL", help="Label each symbol's chart trend (Upstox data)")
     parser.add_argument("--latest", action="store_true", help="Print the latest session Upstox has published")
     parser.add_argument("--backtest", action="store_true", help="Backtest the breakout scanner on NSE files since July 2024")
+    parser.add_argument("--initial-inr", type=Decimal, default=Decimal("100000"),
+                        help="Backtest starting cash in INR (default: 100000)")
+    parser.add_argument("--monthly-inr", type=Decimal, default=Decimal("20000"),
+                        help="Backtest monthly addition in INR (default: 20000)")
+    parser.add_argument("--min-position-inr", type=Decimal, default=Decimal("0"),
+                        help="Exclude simulated buys smaller than this amount (default: 0, no filter)")
     parser.add_argument("--as-of", type=date.fromisoformat, default=date.today(), help="Last session date for --scan/--trend")
     args = parser.parse_args()
     if args.latest:
         latest()
         return
     if args.backtest:
-        backtest(args.as_of)
+        backtest(args.as_of, args.initial_inr, args.monthly_inr, args.min_position_inr)
         return
     if args.trend:
         trend([s.upper() for s in args.trend], args.as_of)
