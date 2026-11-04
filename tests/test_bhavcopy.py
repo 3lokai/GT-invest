@@ -11,8 +11,8 @@ HEADER = ("TradDt,BizDt,Sgmt,Src,FinInstrmTp,FinInstrmId,ISIN,TckrSymb,SctySrs,X
           "TtlTrfVal,TtlNbOfTxsExctd,SsnId,NewBrdLotQty,Rmks,Rsvd1,Rsvd2,Rsvd3,Rsvd4")
 
 
-def row(symbol, series, close):
-    return (f"2026-10-30,2026-10-30,CM,NSE,STK,1,INE000000000,{symbol},{series},,,,,{symbol} LTD,"
+def row(symbol, series, close, isin="INE000000000"):
+    return (f"2026-10-30,2026-10-30,CM,NSE,STK,1,{isin},{symbol},{series},,,,,{symbol} LTD,"
             f"{close},{close + 1},{close - 1},{close},{close},{close},,{close},,,1000,0,10,F1,1,,,,,")
 
 
@@ -29,7 +29,8 @@ def c(day, symbol, open_, close):
 
 class TestBhavcopy(unittest.TestCase):
     def test_parse_keeps_only_mainboard_eq(self):
-        candles = parse(zipped(row("GOOD", "EQ", 100.5), row("SMEONE", "SM", 50), row("WATCHED", "BE", 20)))
+        candles = parse(zipped(row("GOOD", "EQ", 100.5), row("SMEONE", "SM", 50), row("WATCHED", "BE", 20),
+                                 row("GOLDETF", "EQ", 90, "INF000000000")))
         self.assertEqual([x.symbol for x in candles], ["GOOD"])
         self.assertEqual((candles[0].session, candles[0].close, candles[0].volume), ("2026-10-30", 100.5, 1000))
 

@@ -17,9 +17,12 @@ URL = "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_{:%Y%m%
 CACHE = Path("data/raw/bhavcopy")
 # Mainboard rolling settlement only; excludes SME (SM/ST) and trade-for-trade surveillance (BE/BZ).
 SERIES = "EQ"
+# EQ also carries ETFs (INF...) and partly paid shares (IN9...); company shares have INE ISINs.
+ISIN_PREFIX = "INE"
 # EQ price bands are at most 20%, so a bigger overnight move means an unadjusted split/bonus.
 # ponytail: we cut history at the gap instead of adjusting; add corporate-action data to keep it.
 MAX_GAP = 0.25
+FIRST_DAY = date(2024, 7, 8)  # UDiFF files start here; older ones use another format
 
 
 def fetch(day: date, cache: Path = CACHE) -> bytes | None:
@@ -52,21 +55,29 @@ def parse(data: bytes) -> list[Candle]:
             volume=int(r["TtlTradgVol"]),
         )
         for r in csv.DictReader(io.StringIO(text))
-        if r["SctySrs"] == SERIES
+        if r["SctySrs"] == SERIES and r["ISIN"].startswith(ISIN_PREFIX)
     ]
 
 
-def load(end: date, sessions: int, cache: Path = CACHE) -> list[list[Candle]]:
-    """The last `sessions` trading days up to `end`, oldest first, one list of candles per day."""
+def load(end: date, sessions: int | None = None, cache: Path = CACHE) -> list[list[Candle]]:
+    """The last `sessions` trading days up to `end` (all since FIRST_DAY if None), oldest first,
+    one list of candles per day."""
     days: list[list[Candle]] = []
     day = end
-    while len(days) < sessions:
-        if day < date(2024, 7, 8):
+    while sessions is None or len(days) < sessions:
+        if day < FIRST_DAY:
+            if sessions is None:
+                break
             raise ValueError("UDiFF bhavcopy starts July 2024; older files use another format")
         if day.weekday() < 5 and (data := fetch(day, cache)) is not None:
             days.append(parse(data))
         day -= timedelta(days=1)
     return days[::-1]
+
+
+def continues(prev: Candle, bar: Candle) -> bool:
+    """True if `bar` can follow `prev` in one price series (no overnight gap over MAX_GAP)."""
+    return abs(bar.open / prev.close - 1) <= MAX_GAP
 
 
 def histories(days: list[list[Candle]]) -> dict[str, list[Candle]]:
@@ -81,7 +92,7 @@ def histories(days: list[list[Candle]]) -> dict[str, list[Candle]]:
         run = [latest]
         for day in reversed(by_day[:-1]):
             prev = day.get(symbol)
-            if prev is None or abs(run[-1].open / prev.close - 1) > MAX_GAP:
+            if prev is None or not continues(prev, run[-1]):
                 break
             run.append(prev)
         out[symbol] = run[::-1]

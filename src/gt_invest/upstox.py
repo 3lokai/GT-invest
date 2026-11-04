@@ -21,6 +21,7 @@ INSTRUMENTS_URL = "https://assets.upstox.com/market-quote/instruments/exchange/N
 CANDLES_URL = "https://api.upstox.com/v3/historical-candle/{key}/days/1/{to}/{frm}"
 CACHE = Path("data/raw/upstox")
 SERIES = "EQ"  # same mainboard series as bhavcopy.SERIES
+ISIN_PREFIX = "INE"  # company shares only, as bhavcopy.ISIN_PREFIX; drops ETFs
 # Cloudflare in front of Upstox rejects urllib's default User-Agent.
 HEADERS = {"Accept": "application/json", "User-Agent": "gt-invest/0.1"}
 # (window seconds, max requests) for historical candles, from Upstox's rate-limit page.
@@ -67,6 +68,7 @@ def parse_instruments(data: bytes) -> dict[str, str]:
         r["trading_symbol"]: r["instrument_key"]
         for r in json.loads(gzip.decompress(data))
         if r.get("segment") == "NSE_EQ" and r.get("instrument_type") == SERIES
+        and r.get("isin", "").startswith(ISIN_PREFIX)
     }
 
 
