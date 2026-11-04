@@ -4,6 +4,10 @@
 > not evidence that the strategy will make money. Past simulated returns do not guarantee
 > future returns. No orders were placed.
 
+> **DATA QUALITY WARNING:** 7 held-position gaps were simulated at the previous close,
+> potentially a non-executable price. Results may overstate performance. This is an
+> exploratory baseline, **not a validated or deployable strategy**.
+
 ## Data and method
 
 - **Data:** official NSE bhavcopy files, mainboard `EQ` series, every stock that traded on each day, including ones later delisted (no survivorship filter). Prices are **not** split/bonus adjusted; a stock's history restarts at any overnight gap over 25% or missing session.
