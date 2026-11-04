@@ -47,6 +47,7 @@ class BacktestConfig:
     monthly_contribution: Decimal = D("20000")
     slippage: Decimal = D("0.0025")     # per fill, always against us
     max_entry_gap: Decimal = D("0.03")  # skip if the next open is over 3% above the signal close
+    min_position_notional: Decimal = D("0")  # research sensitivity: reject tiny positions (off by default)
     trail_sessions: int = 20            # sell at the next open after a close below this average
     strategy: BreakoutConfig = field(default_factory=BreakoutConfig)
     limits: RiskLimits = field(default_factory=RiskLimits)
@@ -95,6 +96,8 @@ def run(days: list[list[Candle]], start: str, config: BacktestConfig | None = No
     `days` is oldest first, one list of candles per session, as `bhavcopy.load` returns it.
     """
     cfg = config or BacktestConfig()
+    if cfg.initial_cash <= 0 or cfg.monthly_contribution < 0 or cfg.min_position_notional < 0:
+        raise ValueError("Initial cash must be positive; contribution and min size must be nonnegative")
     s = cfg.strategy
     window = max(s.breakout_sessions, s.fast_sessions, s.slow_sessions, s.momentum_sessions) + 1
     result = Result(cfg)
@@ -181,6 +184,9 @@ def run(days: list[list[Candle]], start: str, config: BacktestConfig | None = No
                 qty -= 1
             if not qty:
                 skip("no cash or under one share")
+                continue
+            if price * qty < cfg.min_position_notional:
+                skip("position below minimum notional")
                 continue
             cost = price * qty + cfg.costs.charges(price * qty, buy=True)
             cash -= cost
@@ -333,6 +339,7 @@ def report(result: Result, index: list[Candle], index_name: str) -> str:
         f"- **Charges (Upstox delivery, 2026-11-04):** ₹{costs.brokerage_per_order} per order, STT"
         f" {costs.stt:.1%} both sides, NSE {costs.exchange * 100:.5f}%, SEBI ₹10/crore, stamp"
         f" {costs.stamp_on_buy:.3%} on buys, DP ₹{costs.dp_per_sell} per sale, GST 18% on fees.",
+        f"- **Minimum trade size:** ₹{cfg.min_position_notional:,} (optional research filter, not an execution mandate).",
         f"- **Cash:** ₹{cfg.initial_cash:,} at the start, ₹{cfg.monthly_contribution:,} on the first session"
         " of each month. Existing Groww holdings are not modelled.",
         f"- **Benchmark:** {index_name} price index (Upstox), bought at the close with the same deposits."
