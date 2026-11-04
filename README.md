@@ -64,7 +64,7 @@ Either way, a stock's history is cut at any overnight gap over 25% or any sessio
 To backtest the breakout scanner on every NSE file since July 2024 (about 590 files, ~5 min on the first run):
 
 ```bash
-python -m gt_invest --backtest   # writes reports/backtest-breakout-v1-<last session>.md
+python -m gt_invest --backtest\npython -m gt_invest --backtest --monthly-inr 15000 --min-position-inr 5000   # sensitivity test; separate report   # writes reports/backtest-breakout-v1-<last session>.md
 ```
 
 It replays the scanner day by day, including stocks that were later delisted. Fills happen at the next session's open with slippage, and Upstox delivery charges apply. Each month adds a ₹20k deposit, and the result is compared with the Nifty 500 bought with the same deposits. The data covers only about 18 months of trading after the warm-up: one market regime, not proof of anything.
