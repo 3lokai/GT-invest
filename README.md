@@ -64,10 +64,14 @@ Either way, a stock's history is cut at any overnight gap over 25% or any sessio
 To backtest the breakout scanner on every NSE file since July 2024 (about 590 files, ~5 min on the first run):
 
 ```bash
-python -m gt_invest --backtest\npython -m gt_invest --backtest --monthly-inr 15000 --min-position-inr 5000   # sensitivity test; separate report   # writes reports/backtest-breakout-v1-<last session>.md
+python -m gt_invest --backtest --as-of 2026-11-03
+# sensitivity experiment: smaller monthly deposit, exclude buys below ₹5,000
+python -m gt_invest --backtest --as-of 2026-11-03 --monthly-inr 15000 --min-position-inr 5000
 ```
 
-It replays the scanner day by day, including stocks that were later delisted. Fills happen at the next session's open with slippage, and Upstox delivery charges apply. Each month adds a ₹20k deposit, and the result is compared with the Nifty 500 bought with the same deposits. The data covers only about 18 months of trading after the warm-up: one market regime, not proof of anything.
+Backtests write dated Markdown reports in `reports/`; alternate funding/size settings get distinct filenames and do not overwrite the baseline. The Nifty 500 benchmark needs a **read-only Upstox Analytics Token** in the local git-ignored `.env` (`UPSTOX_ANALYTICS_TOKEN`). Never commit that token.
+
+The simulation replays the scanner day by day, including shares that later delisted. It uses next-session entries, slippage and estimated Upstox delivery charges, with matched monthly contributions for the benchmark. **The first roughly 18 months of trading after warm-up do not establish a profitable strategy**. NSE prices are unadjusted; the report prominently warns that some large-gap exit assumptions may not have been executable. Nothing places broker orders.
 
 ## Next milestones
 
