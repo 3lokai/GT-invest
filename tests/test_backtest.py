@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from gt_invest.__main__ import example_candles
-from gt_invest.backtest import Costs, run, xirr
+from gt_invest.backtest import BacktestConfig, Costs, run, xirr
 from gt_invest.models import Candle
 
 
@@ -40,6 +40,19 @@ class TestBacktest(unittest.TestCase):
         days, start = days_with((191, 193, 189, 192), (170, 170, 170, 170), (172, 174, 171, 173))
         [t] = run(days, start).trades
         self.assertEqual((t.exit_session, t.reason, t.exit_price), ("2025-08-12", "gapped through stop", Decimal("171.57")))
+
+    def test_minimum_trade_notional_filter_is_opt_in(self):
+        days, start = days_with((191, 193, 189, 192))
+        base = run(days, start)
+        self.assertEqual(len(base.open_positions), 1)
+        filtered = run(days, start, BacktestConfig(min_position_notional=Decimal("10000")))
+        self.assertEqual(filtered.open_positions, [])
+        self.assertEqual(filtered.skipped.get("position below minimum notional"), 1)
+
+    def test_negative_research_amounts_rejected(self):
+        days, start = days_with((191, 193, 189, 192))
+        with self.assertRaises(ValueError):
+            run(days, start, BacktestConfig(min_position_notional=Decimal("-1")))
 
     def test_xirr(self):
         self.assertAlmostEqual(xirr([(date(2025, 1, 1), -100), (date(2026, 1, 1), 110)]), 0.10, places=6)
